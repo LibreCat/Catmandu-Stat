@@ -5,7 +5,6 @@ use Catmandu::Sane;
 use Catmandu::Util qw(:is);
 use Statistics::Basic;
 use List::Util;
-use Data::Dumper;
 use Moo;
 
 with 'Catmandu::Exporter';
