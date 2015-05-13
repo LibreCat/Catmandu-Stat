@@ -11,3 +11,4 @@ META.*
 MYMETA.*
 Catmandu-Stat-*
 local
+cpanfile.snapshot
