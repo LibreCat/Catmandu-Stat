@@ -37,6 +37,8 @@ our $VERSION = '0.01';
 
 =over
 
+=item * L<Catmandu::Exporter::Stat>
+
 =item * L<Catmandu::Fix::stat_mean>
 
 =item * L<Catmandu::Fix::stat_median>
