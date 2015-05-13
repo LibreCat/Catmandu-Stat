@@ -29,6 +29,7 @@ Catmandu::Stat - Catmandu modules for working with statistical data
 
 # MODULES
 
+- [Catmandu::Exporter::Stat](https://metacpan.org/pod/Catmandu::Exporter::Stat)
 - [Catmandu::Fix::stat\_mean](https://metacpan.org/pod/Catmandu::Fix::stat_mean)
 - [Catmandu::Fix::stat\_median](https://metacpan.org/pod/Catmandu::Fix::stat_median)
 - [Catmandu::Fix::stat\_stddev](https://metacpan.org/pod/Catmandu::Fix::stat_stddev)
