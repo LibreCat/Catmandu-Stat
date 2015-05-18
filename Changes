@@ -1,6 +1,7 @@
 Revision history for Catmandu-Stat
 
 {{$NEXT}}
-
+  - updating dependencies
+  
 0.01  2015-05-13 14:49:28 CEST
   - initial release
