@@ -112,17 +112,102 @@ Catmandu::Exporter::Stat - a statistical export
 =head1 SYNOPSIS
 
     # Calculate statistics on the availabity of the ISBN fields in the dataset
-    cat data.json | catmandu convert JSON to Stat --keys isbn
+    cat data.json | catmandu convert -v JSON to Stat --keys isbn
+
+    # Calculate statistics on the uniqueness of ISBN numbers in the dataset
+    cat data.json | catmandu convert -v JSON to Stat --keys isbn --values 1
+
+    # Export the statistics as YAML
+    cat data.json | catmandu convert -v JSON to Stat --keys isbn --values 1 --as YAML
+
+=head1 DESCRIPTION
+
+The L<Catmandu::Stat> package can be used to calculate statistics on the availablity of
+fields (keys) in a data file. Use this exporter to count the availability of fields or
+the number of duplicate values. For each field the exporter calculates the following
+statistics:
+
+  * count  : the number of occurences of a field (or value) in all records
+  * min    : the minimum number of occurences of a field (or value) in any record
+  * max    : the maximum number of occurences of a field (or value) in any record
+  * mean   : the mean number of occurences of a field (or value) in all records
+  * median : the median number of occurences of a field (or value) in all records
+  * variance : the variance of the field (or value) number
+  * stdev  : the standard deviation of the field (or value) number
+
+=head1 CONFIGURATION
+
+=over 4
+
+=item v 
+
+Verbose output. Show the processing speed.
+
+=item fix FIX
+
+A fix or a fix file containing one or more fixes applied to the input data before 
+the statistics are calculated.
+
+=item keys KEY[,KEY,...]
+
+One or more keys in the data for which statistics need to be calculated. No deep nested
+keys are allowed. The exporter will collect statistics on the availability of a field in 
+all records. For instance, the following record contains one 'title' field, zero 'isbn'
+fields and 3 'author' fields
+
+    ---
+    title: ABCDEF
+    author: 
+        - Davis, Miles
+        - Parker, Charly
+        - Mingus, Charles
+    year: 1950
+
+Examples of operation:
+
+    # Calculate statistics on the number of records that contain a 'title' 
+    cat data.json | catmandu convert JSON to Stat --keys title
+
+    # Calculate statistics on the number of records that contain a 'title', 'isbn' or 'subject' fields 
+    cat data.json | catmandu convert JSON to Stat --keys title,isbn,subject
+
+    # The next example will not work: no deeply nested keys allowed
+    cat data.json | catmandu convert JSON to Stat --keys foo.bar.x.y
+
+=item values 0 | 1
+
+When the value option is activated, then the statistics are calculated on the contents of the
+fields instead of the availability of fields. Use this option to calculate statistics on 
+duplicate field values. For instance in the follow example, the title field has 2 duplicates,
+the author field has zero duplicates.
+
+    ---
+    title: ABC
+    author: 
+        - Test
+        - Test2
+    ---
+    title: ABC
+    author:
+        - Test3
+    ---
+    title: DEF
+
+Examples of operation:
 
     # Calculate statistics on the uniqueness of ISBN numbers in the dataset
     cat data.json | catmandu convert JSON to Stat --keys isbn --values 1
 
-    # Export the statistics as YAML
-    cat data.json | catmandu convert JSON to Stat --keys isbn --values 1 --as YAML
+=item as CSV | YAML | JSON | ...
+
+By default the statistics are exported in a CSV format. The use 'as' option to change the
+export format.
+
+=back
 
 =head1 SEE ALSO
 
-L<Catmandu::Exporter>
+L<Catmandu::Exporter> , L<Statistics::Basic>
 
 =cut
 
