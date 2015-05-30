@@ -11,13 +11,13 @@ our $VERSION = '0.02';
 =head1 SYNOPSIS
 
     # Calculate statistics on the availabity of the ISBN fields in the dataset
-    cat data.json | catmandu JSON to Stat --keys isbn
+    cat data.json | catmandu convert JSON to Stat --keys isbn
 
     # Calculate statistics on the uniqueness of ISBN numbers in the dataset
-    cat data.json | catmandu JSON to Stat --keys isbn --values 1
+    cat data.json | catmandu convert JSON to Stat --keys isbn --values 1
 
     # Export the statistics as YAML
-    cat data.json | catmandu JSON to Stat --keys isbn --values 1 --as YAML
+    cat data.json | catmandu convert JSON to Stat --keys isbn --values 1 --as YAML
 
     # Or in fix files
 
