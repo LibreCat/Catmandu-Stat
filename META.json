@@ -71,6 +71,7 @@
    },
    "version" : "0.02",
    "x_contributors" : [
+      "Johann Rolschewski <rolschewski@gmail.com>",
       "Patrick Hochstenbach <patrick.hochstenbach@ugent.be>"
    ]
 }

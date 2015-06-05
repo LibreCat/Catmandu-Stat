@@ -34,9 +34,9 @@ my $data = [
 ];
 
 my $answer =<<EOF;
-_id,count,max,mean,median,min,stdev,variance
-name,18,2,1.06,1,1,0.24,0.06
-age,0,0,0,0,0,0,0
+_id,count,max,mean,median,min,stdev,variance,zeros,zeros%
+name,18,2,1.06,1,1,0.24,0.06,0,0
+age,0,0,0,0,0,0,0,17,100
 EOF
 
 my $file = "";
