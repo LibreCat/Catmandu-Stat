@@ -32,7 +32,9 @@ sub value_stats {
     
     for my $key (@keys) {
         my $cnt = 0;
-        my $val = $data->{$key} // '';
+        my $val = is_value($data->{$key}) ? $data->{$key} : '<null>';
+
+warn $val;
 
         if (is_array_ref($val)) {
             for (@$val) {
@@ -53,7 +55,7 @@ sub key_stats {
         my $cnt = 0;
         my $val = $data->{$key};
 
-        if (!$val) {
+        if (!defined($val)) {
             $cnt = 0;
         }
         elsif (is_array_ref($val)) {
@@ -76,7 +78,7 @@ sub commit {
         for my $key (@keys) {
             my $cnt = [];
             for my $val (keys %{$self->{res}->{$key}}) {
-                my $c = $self->{res}->{$key}->{$val} // 0;
+                my $c = $val eq '<null>' ? 0 : $self->{res}->{$key}->{$val};
                 push @$cnt , $c;
             }
             $self->{res}->{$key} = $cnt;
@@ -98,6 +100,16 @@ sub commit {
         $stats->{median}   = defined($val) ? '' . Statistics::Basic::median($val) : 'null';
         $stats->{variance} = defined($val) ? '' . Statistics::Basic::variance($val) : 'null';
         $stats->{stdev}    = defined($val) ? '' . Statistics::Basic::stddev($val) : 'null';
+
+        my ($zeros,$zerosp) = ('null','null');
+
+        if (defined($val)) {
+            $zeros  = int(grep {$_ == 0} @$val);
+            $zerosp = @$val > 0 ? 100 * $zeros / int(@$val) : 0;
+        }
+
+        $stats->{zeros}    = $zeros;
+        $stats->{'zeros%'} = $zerosp;
 
         $exporter->add($stats);
     }
@@ -127,13 +139,27 @@ fields (keys) in a data file. Use this exporter to count the availability of fie
 the number of duplicate values. For each field the exporter calculates the following
 statistics:
 
-  * count  : the number of occurences of a field (or value) in all records
-  * min    : the minimum number of occurences of a field (or value) in any record
-  * max    : the maximum number of occurences of a field (or value) in any record
-  * mean   : the mean number of occurences of a field (or value) in all records
-  * median : the median number of occurences of a field (or value) in all records
-  * variance : the variance of the field (or value) number
-  * stdev  : the standard deviation of the field (or value) number
+  * count  : the number of occurences of a field in all records
+  * min    : the minimum number of occurences of a field in any record
+  * max    : the maximum number of occurences of a field in any record
+  * mean   : the mean number of occurences of a field in all records
+  * median : the median number of occurences of a field in all records
+  * variance : the variance of the field number
+  * stdev  : the standard deviation of the field number
+  * zeros  : the number of records without a field
+  * zeros% : the percentage of records without a field
+
+In case of values:
+
+  * count  : the number of occurences of a value in all records
+  * min    : the minimum number of occurences of a value in all records
+  * max    : the maximum number of occurences of a value in any records
+  * mean   : the mean number of occurences of a value in all records
+  * median : the median number of occurences of a value in all records
+  * variance : the variance of the value occurence number
+  * stdev  : the standard deviation of the value occurenve number
+  * zeros  : the number of values which are undefined
+  * zeros% : the percentage of values which are undefined
 
 =head1 CONFIGURATION
 
