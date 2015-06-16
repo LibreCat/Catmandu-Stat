@@ -25,6 +25,7 @@ my %module_build_args = (
   "recursive_test_files" => 1,
   "requires" => {
     "Catmandu" => "0.9301",
+    "Catmandu::Exporter::Table" => 0,
     "List::Util" => "1.42",
     "Statistics::Basic" => "1.6611",
     "perl" => "v5.10.1"

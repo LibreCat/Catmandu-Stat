@@ -36,8 +36,8 @@ my $data = [
 my $answer =<<EOF;
 | name | count | zeros | zeros% | min | max | mean | median | mode | variance | stdev |
 |------|-------|-------|--------|-----|-----|------|--------|------|----------|-------|
-| name | 18    | 0     | 0      | 1   | 2   | 1.06 | 1      | 1    | 0.06     | 0.24  |
-| age  | 0     | 17    | 100    | 0   | 0   | 0    | 0      | 0    | 0        | 0     |
+| name | 18    | 0     | 0.0    | 1   | 2   | 1.06 | 1      | 1    | 0.06     | 0.24  |
+| age  | 0     | 17    | 100.0  | 0   | 0   | 0    | 0      | 0    | 0        | 0     |
 EOF
 
 my $file = "";
@@ -58,7 +58,7 @@ $file = "";
 my $answer2 =<<EOF;
 | name | count | zeros | zeros% | min | max | mean | median | variance | stdev |
 |------|-------|-------|--------|-----|-----|------|--------|----------|-------|
-| name | 18    | 0     | 0      | 1   | 8   | 4.5  | 4.5    | 7.25     | 2.69  |
+| name | 18    | 0     | 0.0    | 1   | 8   | 4.5  | 4.5    | 7.25     | 2.69  |
 EOF
 
 my $exporter2 = $pkg->new(fields => 'name' , values => 1, file => \$file);
