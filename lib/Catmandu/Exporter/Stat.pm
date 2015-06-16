@@ -10,7 +10,7 @@ use Moo;
 with 'Catmandu::Exporter';
 
 has fields   => (is => 'ro' , required => 1);
-has as       => (is => 'ro' , default => sub { 'CSV'} );
+has as       => (is => 'ro' , default => sub { 'Table'} );
 has 'values' => (is => 'ro');
 has res      => (is => 'ro');
 
@@ -87,10 +87,10 @@ sub commit {
     my $fields;
 
     if ($self->values) {
-        $fields = [qw(count zeros zeros% min max mean median variance stdev)];
+        $fields = [qw(name count zeros zeros% min max mean median variance stdev)];
     }
     else {
-        $fields = [qw(count zeros zeros% min max mean mode median variance stdev)];
+        $fields = [qw(name count zeros zeros% min max mean median mode variance stdev)];
     }
 
     my $exporter = Catmandu->exporter(
@@ -101,7 +101,7 @@ sub commit {
 
     for my $key (@keys) {
         my $stats = {};
-        $stats->{_id} = $key;
+        $stats->{name} = $key;
 
         my $val  = $self->{res}->{$key};
 
@@ -120,8 +120,14 @@ sub commit {
         my ($zeros,$zerosp) = ('null','null');
 
         if (defined($val)) {
-            $zeros  = int(grep {$_ == 0} @$val);
-            $zerosp = @$val > 0 ? 100 * $zeros / int(@$val) : 0;
+            if ($self->values) {
+                $zeros  = int(grep {$_ == 0} @$val);
+                $zerosp = sprintf "%.1f" , $stats->{count} > 0 ? 100 * $zeros / $stats->{count} : 0;
+            }
+            else {
+                $zeros  = int(grep {$_ == 0} @$val);
+                $zerosp = sprintf "%.1f" , @$val > 0 ? 100 * $zeros / int(@$val) : 0;
+            }
         }
 
         $stats->{zeros}    = $zeros;
@@ -155,7 +161,10 @@ fields in a data file. Use this exporter to count the availability of fields or
 the number of duplicate values. For each field the exporter calculates the following
 statistics:
 
+  * name   : the name of a field
   * count  : the number of occurences of a field in all records
+  * zeros  : the number of records without a field
+  * zeros% : the percentage of records without a field
   * min    : the minimum number of occurences of a field in any record
   * max    : the maximum number of occurences of a field in any record
   * mean   : the mean number of occurences of a field in all records
@@ -163,20 +172,19 @@ statistics:
   * mode   : the most common number of occurences of a field in all records
   * variance : the variance of the field number
   * stdev  : the standard deviation of the field number
-  * zeros  : the number of records without a field
-  * zeros% : the percentage of records without a field
 
 In case of values:
 
   * count  : the number of values found in all records
+  * zeros  : the number of values which are mull or undefined
+  * zeros% : the percentage of values which are undefined
   * min    : the minimum number of occurences of a value in all records
   * max    : the maximum number of occurences of a value in any records
   * mean   : the mean number of occurences of a value in all records
   * median : the median number of occurences of a value in all records
   * variance : the variance of the value occurence number
   * stdev  : the standard deviation of the value occurenve number
-  * zeros  : the number of values which are undefined
-  * zeros% : the percentage of values which are undefined
+
 
 =head1 CONFIGURATION
 
