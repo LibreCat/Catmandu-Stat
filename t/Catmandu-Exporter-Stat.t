@@ -52,4 +52,22 @@ is $file , $answer , "answer ok";
 
 is($exporter->count, 17, "Count ok");
 
-done_testing 5;
+$file = "";
+
+my $answer2 =<<EOF;
+_id,count,max,mean,median,min,stdev,variance,zeros,zeros%
+name,18,8,4.5,4.5,1,2.69,7.25,0,0
+EOF
+
+my $exporter2 = $pkg->new(keys => 'name' , values => 1, file => \$file);
+
+isa_ok $exporter2, $pkg;
+
+$exporter2->add($_) for @$data;
+$exporter2->commit;
+
+is $file , $answer2 , "answer ok";
+
+is($exporter2->count, 17, "Count ok");
+
+done_testing 8;

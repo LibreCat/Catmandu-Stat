@@ -32,9 +32,7 @@ sub value_stats {
     
     for my $key (@keys) {
         my $cnt = 0;
-        my $val = is_value($data->{$key}) ? $data->{$key} : '<null>';
-
-warn $val;
+        my $val = $data->{$key};
 
         if (is_array_ref($val)) {
             for (@$val) {
@@ -42,6 +40,7 @@ warn $val;
             }
         }
         else {
+            $val = '<null>' unless is_value($val);
             $self->{res}->{$key}->{$val} += 1;
         }
     }
@@ -83,7 +82,7 @@ sub commit {
             }
             $self->{res}->{$key} = $cnt;
         }
-    } 
+    }
 
     my $exporter = Catmandu->exporter($self->as, file => $self->file);
 
@@ -151,7 +150,7 @@ statistics:
 
 In case of values:
 
-  * count  : the number of occurences of a value in all records
+  * count  : the number of values found in all records
   * min    : the minimum number of occurences of a value in all records
   * max    : the maximum number of occurences of a value in any records
   * mean   : the mean number of occurences of a value in all records
