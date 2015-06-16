@@ -34,14 +34,14 @@ my $data = [
 ];
 
 my $answer =<<EOF;
-_id,count,max,mean,median,min,stdev,variance,zeros,zeros%
-name,18,2,1.06,1,1,0.24,0.06,0,0
-age,0,0,0,0,0,0,0,17,100
+count,zeros,zeros%,min,max,mean,mode,median,variance,stdev
+18,0,0,1,2,1.06,1,1,0.06,0.24
+0,17,100,0,0,0,0,0,0,0
 EOF
 
 my $file = "";
 
-my $exporter = $pkg->new(keys => 'name,age' , file => \$file);
+my $exporter = $pkg->new(fields => 'name,age' , file => \$file);
 
 isa_ok $exporter, $pkg;
 
@@ -55,11 +55,11 @@ is($exporter->count, 17, "Count ok");
 $file = "";
 
 my $answer2 =<<EOF;
-_id,count,max,mean,median,min,stdev,variance,zeros,zeros%
-name,18,8,4.5,4.5,1,2.69,7.25,0,0
+count,zeros,zeros%,min,max,mean,median,variance,stdev
+18,0,0,1,8,4.5,4.5,7.25,2.69
 EOF
 
-my $exporter2 = $pkg->new(keys => 'name' , values => 1, file => \$file);
+my $exporter2 = $pkg->new(fields => 'name' , values => 1, file => \$file);
 
 isa_ok $exporter2, $pkg;
 

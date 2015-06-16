@@ -9,7 +9,7 @@ use Moo;
 
 with 'Catmandu::Exporter';
 
-has keys     => (is => 'ro' , required => 1);
+has fields   => (is => 'ro' , required => 1);
 has as       => (is => 'ro' , default => sub { 'CSV'} );
 has 'values' => (is => 'ro');
 has res      => (is => 'ro');
@@ -28,7 +28,7 @@ sub add {
 sub value_stats {
     my ($self,$data) = @_;
 
-    my @keys = split(/,/,$self->keys);
+    my @keys = split(/,/,$self->fields);
     
     for my $key (@keys) {
         my $cnt = 0;
@@ -48,7 +48,7 @@ sub value_stats {
 
 sub key_stats {
     my ($self,$data) = @_;
-    my @keys = split(/,/,$self->keys);
+    my @keys = split(/,/,$self->fields);
     
     for my $key (@keys) {
         my $cnt = 0;
@@ -71,7 +71,7 @@ sub key_stats {
 sub commit {
     my ($self) = shift;
 
-    my @keys = split(/,/,$self->keys);
+    my @keys = split(/,/,$self->fields);
 
     if ($self->values) {
         for my $key (@keys) {
@@ -84,7 +84,20 @@ sub commit {
         }
     }
 
-    my $exporter = Catmandu->exporter($self->as, file => $self->file);
+    my $fields;
+
+    if ($self->values) {
+        $fields = [qw(count zeros zeros% min max mean median variance stdev)];
+    }
+    else {
+        $fields = [qw(count zeros zeros% min max mean mode median variance stdev)];
+    }
+
+    my $exporter = Catmandu->exporter(
+                        $self->as, 
+                        fields => $fields,
+                        file => $self->file
+                   );
 
     for my $key (@keys) {
         my $stats = {};
@@ -99,6 +112,10 @@ sub commit {
         $stats->{median}   = defined($val) ? '' . Statistics::Basic::median($val) : 'null';
         $stats->{variance} = defined($val) ? '' . Statistics::Basic::variance($val) : 'null';
         $stats->{stdev}    = defined($val) ? '' . Statistics::Basic::stddev($val) : 'null';
+        
+        unless ($self->values) {
+            $stats->{mode}     = defined($val) ? '' . Statistics::Basic::mode($val) : 'null';
+        }
 
         my ($zeros,$zerosp) = ('null','null');
 
@@ -123,18 +140,18 @@ Catmandu::Exporter::Stat - a statistical export
 =head1 SYNOPSIS
 
     # Calculate statistics on the availabity of the ISBN fields in the dataset
-    cat data.json | catmandu convert -v JSON to Stat --keys isbn
+    cat data.json | catmandu convert -v JSON to Stat --fields isbn
 
     # Calculate statistics on the uniqueness of ISBN numbers in the dataset
-    cat data.json | catmandu convert -v JSON to Stat --keys isbn --values 1
+    cat data.json | catmandu convert -v JSON to Stat --fields isbn --values 1
 
     # Export the statistics as YAML
-    cat data.json | catmandu convert -v JSON to Stat --keys isbn --values 1 --as YAML
+    cat data.json | catmandu convert -v JSON to Stat --fields isbn --values 1 --as YAML
 
 =head1 DESCRIPTION
 
 The L<Catmandu::Stat> package can be used to calculate statistics on the availablity of
-fields (keys) in a data file. Use this exporter to count the availability of fields or
+fields in a data file. Use this exporter to count the availability of fields or
 the number of duplicate values. For each field the exporter calculates the following
 statistics:
 
@@ -143,6 +160,7 @@ statistics:
   * max    : the maximum number of occurences of a field in any record
   * mean   : the mean number of occurences of a field in all records
   * median : the median number of occurences of a field in all records
+  * mode   : the most common number of occurences of a field in all records
   * variance : the variance of the field number
   * stdev  : the standard deviation of the field number
   * zeros  : the number of records without a field
@@ -173,10 +191,10 @@ Verbose output. Show the processing speed.
 A fix or a fix file containing one or more fixes applied to the input data before 
 the statistics are calculated.
 
-=item keys KEY[,KEY,...]
+=item fields KEY[,KEY,...]
 
-One or more keys in the data for which statistics need to be calculated. No deep nested
-keys are allowed. The exporter will collect statistics on the availability of a field in 
+One or more fields in the data for which statistics need to be calculated. No deep nested
+fields are allowed. The exporter will collect statistics on the availability of a field in 
 all records. For instance, the following record contains one 'title' field, zero 'isbn'
 fields and 3 'author' fields
 
@@ -191,13 +209,13 @@ fields and 3 'author' fields
 Examples of operation:
 
     # Calculate statistics on the number of records that contain a 'title' 
-    cat data.json | catmandu convert JSON to Stat --keys title
+    cat data.json | catmandu convert JSON to Stat --fields title
 
     # Calculate statistics on the number of records that contain a 'title', 'isbn' or 'subject' fields 
-    cat data.json | catmandu convert JSON to Stat --keys title,isbn,subject
+    cat data.json | catmandu convert JSON to Stat --fields title,isbn,subject
 
-    # The next example will not work: no deeply nested keys allowed
-    cat data.json | catmandu convert JSON to Stat --keys foo.bar.x.y
+    # The next example will not work: no deeply nested fields allowed
+    cat data.json | catmandu convert JSON to Stat --fields foo.bar.x.y
 
 =item values 0 | 1
 
@@ -221,7 +239,7 @@ the author field has zero duplicates.
 Examples of operation:
 
     # Calculate statistics on the uniqueness of ISBN numbers in the dataset
-    cat data.json | catmandu convert JSON to Stat --keys isbn --values 1
+    cat data.json | catmandu convert JSON to Stat --fields isbn --values 1
 
 =item as CSV | YAML | JSON | ...
 
