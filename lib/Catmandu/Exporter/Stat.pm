@@ -36,12 +36,13 @@ sub value_stats {
 
         if (is_array_ref($val)) {
             for (@$val) {
-                $self->{res}->{$key}->{$_} += 1;
+                $val = '<null>' unless is_value($val);
+                $self->{res}->{$key}->{__values__}->{$_} += 1;
             }
         }
         else {
             $val = '<null>' unless is_value($val);
-            $self->{res}->{$key}->{$val} += 1;
+            $self->{res}->{$key}->{__values__}->{$val} += 1;
         }
     }
 }
@@ -56,15 +57,24 @@ sub key_stats {
 
         if (!defined($val)) {
             $cnt = 0;
+            $self->{res}->{$key}->{__values__}->{'<null>'} += 1;
         }
         elsif (is_array_ref($val)) {
             $cnt = int(@$val);
+            for (@$val) {
+                 $self->{res}->{$key}->{__values__}->{$_} += 1;
+            }
+        }
+        elsif (is_hash_ref($val)) {
+            $cnt = 1;
+            $self->{res}->{$key}->{__values__}->{$val} += 1;
         }
         else {
             $cnt = 1;
+            $self->{res}->{$key}->{__values__}->{$val} += 1;
         }
 
-        push @{$self->{res}->{$key}} , $cnt;
+        push @{$self->{res}->{$key}->{__counts__}} , $cnt;
     }
 }
 
@@ -76,21 +86,21 @@ sub commit {
     if ($self->values) {
         for my $key (@keys) {
             my $cnt = [];
-            for my $val (keys %{$self->{res}->{$key}}) {
-                my $c = $val eq '<null>' ? 0 : $self->{res}->{$key}->{$val};
+            for my $val (keys %{$self->{res}->{$key}->{__values__}}) {
+                my $c = $val eq '<null>' ? 0 : $self->{res}->{$key}->{__values__}->{$val};
                 push @$cnt , $c;
             }
-            $self->{res}->{$key} = $cnt;
+            $self->{res}->{$key}->{__counts__} = $cnt;
         }
     }
 
     my $fields;
 
     if ($self->values) {
-        $fields = [qw(name count zeros zeros% min max mean median variance stdev)];
+        $fields = [qw(name count zeros zeros% min max mean median variance stdev uniq)];
     }
     else {
-        $fields = [qw(name count zeros zeros% min max mean median mode variance stdev)];
+        $fields = [qw(name count zeros zeros% min max mean median mode variance stdev uniq)];
     }
 
     my $exporter = Catmandu->exporter(
@@ -103,7 +113,7 @@ sub commit {
         my $stats = {};
         $stats->{name} = $key;
 
-        my $val  = $self->{res}->{$key};
+        my $val  = $self->{res}->{$key}->{__counts__};
 
         $stats->{count}    = defined($val) ? List::Util::sum0(@$val) : 0;
         $stats->{min}      = defined($val) ? List::Util::min(@$val) : 'null';
@@ -132,6 +142,8 @@ sub commit {
 
         $stats->{zeros}    = $zeros;
         $stats->{'zeros%'} = $zerosp;
+
+        $stats->{uniq}     = int(keys %{$self->{res}->{$key}->{__values__}});
 
         $exporter->add($stats);
     }
@@ -172,6 +184,7 @@ statistics:
   * mode   : the most common number of occurences of a field in all records
   * variance : the variance of the field number
   * stdev  : the standard deviation of the field number
+  * uniq   : the number of uniq values
 
 In case of values:
 
@@ -184,6 +197,7 @@ In case of values:
   * median : the median number of occurences of a value in all records
   * variance : the variance of the value occurence number
   * stdev  : the standard deviation of the value occurenve number
+  * uniq   : the number of uniq values
 
 
 =head1 CONFIGURATION
