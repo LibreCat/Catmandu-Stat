@@ -9,14 +9,19 @@ use Moo;
 
 with 'Catmandu::Exporter';
 
-has fields   => (is => 'ro' , required => 1);
-has as       => (is => 'ro' , default => sub { 'Table'} );
-has 'values' => (is => 'ro');
-has res      => (is => 'ro');
+has fields       => (is => 'rw');
+has as           => (is => 'ro', default => sub { 'Table'} );
+has 'values'     => (is => 'ro');
+has res          => (is => 'ro');
+
 
 sub add {
     my ($self, $data) = @_;
     
+    unless (defined $self->fields) {
+        $self->fields(join(",",sort keys %$data));
+    }
+
     if ($self->values) {
         $self->value_stats($data);
     }
@@ -32,17 +37,28 @@ sub value_stats {
     
     for my $key (@keys) {
         my $cnt = 0;
+
+        next unless exists $data->{$key};
+
         my $val = $data->{$key};
 
         if (is_array_ref($val)) {
             for (@$val) {
-                $val = '<null>' unless is_value($val);
-                $self->{res}->{$key}->{__values__}->{$_} += 1;
+                if (!defined($_) || length($val) == 0) {
+                    $self->{res}->{$key}->{__values__}->{'<null>'} += 1;
+                }
+                else {
+                    $self->{res}->{$key}->{__values__}->{$_} += 1;
+                }
             }
         }
         else {
-            $val = '<null>' unless is_value($val);
-            $self->{res}->{$key}->{__values__}->{$val} += 1;
+            if (!defined($val) || length($val) == 0) {
+                $self->{res}->{$key}->{__values__}->{'<null>'} += 1;
+            }
+            else {
+                $self->{res}->{$key}->{__values__}->{$val} += 1;
+            }
         }
     }
 }
@@ -68,6 +84,10 @@ sub key_stats {
         elsif (is_hash_ref($val)) {
             $cnt = 1;
             $self->{res}->{$key}->{__values__}->{$val} += 1;
+        }
+        elsif (length($val) == 0) {
+            $cnt = 0;
+            $self->{res}->{$key}->{__values__}->{'<null>'} += 1;
         }
         else {
             $cnt = 1;
@@ -115,38 +135,37 @@ sub commit {
 
         my $val  = $self->{res}->{$key}->{__counts__};
 
-        $stats->{count}    = defined($val) ? List::Util::sum0(@$val) : 0;
-        $stats->{min}      = defined($val) ? List::Util::min(@$val) : 'null';
-        $stats->{max}      = defined($val) ? List::Util::max(@$val) : 'null';
-        $stats->{mean}     = defined($val) ? '' . Statistics::Basic::mean($val) : 'null';
-        $stats->{median}   = defined($val) ? '' . Statistics::Basic::median($val) : 'null';
-        $stats->{variance} = defined($val) ? '' . Statistics::Basic::variance($val) : 'null';
-        $stats->{stdev}    = defined($val) ? '' . Statistics::Basic::stddev($val) : 'null';
+        $stats->{count}    = defined($val) && @$val ? List::Util::sum0(@$val) : 'n/a';
+        $stats->{min}      = defined($val) && @$val ? List::Util::min(@$val) : 'n/a';
+        $stats->{max}      = defined($val) && @$val ? List::Util::max(@$val) : 'n/a';
+        $stats->{mean}     = defined($val) && @$val ? '' . Statistics::Basic::mean($val) : 'n/a';
+        $stats->{median}   = defined($val) && @$val ? '' . Statistics::Basic::median($val) : 'n/a';
+        $stats->{variance} = defined($val) && @$val ? '' . Statistics::Basic::variance($val) : 'n/a';
+        $stats->{stdev}    = defined($val) && @$val ? '' . Statistics::Basic::stddev($val) : 'n/a';
         
         unless ($self->values) {
-            $stats->{mode}     = defined($val) ? '' . Statistics::Basic::mode($val) : 'null';
+            $stats->{mode}     = defined($val) && @$val ? '' . Statistics::Basic::mode($val) : 'n/a';
         }
 
-        my ($zeros,$zerosp) = ('null','null');
+        my ($zeros,$zerosp) = ('n/a','n/a');
 
-        if (defined($val)) {
+        if (defined($val) && @$val) {
             if ($self->values) {
                 $zeros  = int(grep {$_ == 0} @$val);
-                $zerosp = sprintf "%.1f" , $stats->{count} > 0 ? 100 * $zeros / $stats->{count} : 0;
+                $zerosp = sprintf "%.1f" , $stats->{count} > 0 ? 100 * $zeros / ($zeros + $stats->{count}) : 100;
             }
             else {
                 $zeros  = int(grep {$_ == 0} @$val);
-                $zerosp = sprintf "%.1f" , @$val > 0 ? 100 * $zeros / int(@$val) : 0;
+                $zerosp = sprintf "%.1f" , @$val > 0 ? 100 * $zeros / int(@$val) : 100;
             }
         }
 
         $stats->{zeros}    = $zeros;
         $stats->{'zeros%'} = $zerosp;
 
-        $stats->{uniq}     = int(keys %{$self->{res}->{$key}->{__values__}});
+        $stats->{uniq}     = defined($val) && @$val ? $self->uniq($key) : 'n/a';
 
-        my $entropy = $self->entropy($key);
-        $stats->{entropy}  = sprintf "%.1f/%.1f" , $entropy->[0], $entropy->[1];
+        $stats->{entropy}  = $self->entropy($key);
 
         $exporter->add($stats);
     }
@@ -154,21 +173,33 @@ sub commit {
     $exporter->commit;
 }
 
+sub uniq {
+    my ($self,$key) = @_;
+
+    return int(grep({ $_ ne '<null>' } keys %{$self->{res}->{$key}->{__values__}}));
+}
+
 sub entropy {
     my ($self,$key) = @_;
+    
+    return 'n/a' unless exists $self->{res}->{$key}->{__values__};
+
     my $values = $self->{res}->{$key}->{__values__};
     my $cnt = 0;
+
     for my $k (keys %$values) {
         $cnt += $values->{$k};
     }
 
-    my $h;
+    return 'n/a' unless $cnt > 0;
+
+    my $h = 0;
     for my $k (keys %$values) {
         my $p = $values->{$k}/$cnt;
         $h += $p * log($p)/log(2);
     }
 
-    return [ -1 * $h , log($cnt)/log(2) ];
+    return sprintf "%.1f/%.1f" , -1 * $h ,log($cnt)/log(2);
 }
 
 =head1 NAME
@@ -194,7 +225,7 @@ the number of duplicate values. For each field the exporter calculates the follo
 statistics:
 
   * name    : the name of a field
-  * count   : the number of occurences of a field in all records
+  * count   : the number of non-zero occurences of a field in all records
   * zeros   : the number of records without a field
   * zeros%  : the percentage of records without a field
   * min     : the minimum number of occurences of a field in any record
@@ -209,7 +240,7 @@ statistics:
 
 In case of values:
 
-  * count   : the number of values found in all records
+  * count   : the number of non-zero values found in all records
   * zeros   : the number of values which are mull or undefined
   * zeros%  : the percentage of values which are undefined
   * min     : the minimum number of occurences of a value in all records
@@ -266,6 +297,8 @@ Examples of operation:
 
     # The next example will not work: no deeply nested fields allowed
     cat data.json | catmandu convert JSON to Stat --fields foo.bar.x.y
+
+When no fields parameter is available, then all fields are read from the first input record.
 
 =item values 0 | 1
 

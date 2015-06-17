@@ -14,35 +14,26 @@ BEGIN {
 require_ok $pkg;
 
 my $data = [
- {"name" => "John"} ,
- {"name" => "John"} ,
- {"name" => "John"} ,
- {"name" => "John"} ,
- {"name" => "John"} ,
- {"name" => "John"} ,
- {"name" => "John"} ,
- {"name" => "John"} ,
- {"name" => "Peter"} ,
- {"name" => "Peter"} ,
- {"name" => "Peter"} ,
- {"name" => "Ann"} ,
- {"name" => "Ann"} ,
- {"name" => "Ann"} ,
- {"name" => "Ann"} ,
- {"name" => "Ann"} ,
- {"name" => ["Alice","Ann"] } ,
+ {"name"=>"patrick"} ,
+ {"name"=>"patrick"} ,
+ {"name"=>"patrick"} ,
+ {"name"=>undef} ,
+ {"age"=>"44"} ,
+ {"foo"=>undef} ,
 ];
 
 my $answer =<<EOF;
-| name | count | zeros | zeros% | min | max | mean | median | mode | variance | stdev | uniq | entropy |
-|------|-------|-------|--------|-----|-----|------|--------|------|----------|-------|------|---------|
-| name | 18    | 0     | 0.0    | 1   | 2   | 1.06 | 1      | 1    | 0.06     | 0.24  | 4    | 1.7/4.2 |
-| age  | 0     | 17    | 100.0  | 0   | 0   | 0    | 0      | 0    | 0        | 0     | 1    | 0.0/4.1 |
+| name | count | zeros | zeros% | min | max | mean | median | mode   | variance | stdev | uniq | entropy |
+|------|-------|-------|--------|-----|-----|------|--------|--------|----------|-------|------|---------|
+| name | 3     | 3     | 50.0   | 0   | 1   | 0.5  | 0.5    | [0, 1] | 0.25     | 0.5   | 2    | 1.0/2.6 |
+| age  | 1     | 5     | 83.3   | 0   | 1   | 0.17 | 0      | 0      | 0.14     | 0.37  | 2    | 0.7/2.6 |
+| x    | 0     | 6     | 100.0  | 0   | 0   | 0    | 0      | 0      | 0        | 0     | 1    | 0.0/2.6 |
+| foo  | 0     | 6     | 100.0  | 0   | 0   | 0    | 0      | 0      | 0        | 0     | 1    | 0.0/2.6 |
 EOF
 
 my $file = "";
 
-my $exporter = $pkg->new(fields => 'name,age' , file => \$file);
+my $exporter = $pkg->new(fields => 'name,age,x,foo' , file => \$file);
 
 isa_ok $exporter, $pkg;
 
@@ -51,17 +42,20 @@ $exporter->commit;
 
 is $file , $answer , "answer ok";
 
-is($exporter->count, 17, "Count ok");
+is($exporter->count, 6, "Count ok");
 
 $file = "";
 
 my $answer2 =<<EOF;
 | name | count | zeros | zeros% | min | max | mean | median | variance | stdev | uniq | entropy |
 |------|-------|-------|--------|-----|-----|------|--------|----------|-------|------|---------|
-| name | 18    | 0     | 0.0    | 1   | 8   | 4.5  | 4.5    | 7.25     | 2.69  | 4    | 1.7/4.2 |
+| name | 3     | 1     | 25.0   | 0   | 3   | 1.5  | 1.5    | 2.25     | 1.5   | 2    | 0.8/2.0 |
+| age  | 1     | 0     | 0.0    | 1   | 1   | 1    | 1      | 0        | 0     | 1    | 0.0/0.0 |
+| x    | 0     |       |        |     |     |      |        |          |       |      |         |
+| foo  | 0     | 1     | 100.0  | 0   | 0   | 0    | 0      | 0        | 0     | 1    | 0.0/0.0 |
 EOF
 
-my $exporter2 = $pkg->new(fields => 'name' , values => 1, file => \$file);
+my $exporter2 = $pkg->new(fields => 'name,age,x,foo' , values => 1, file => \$file);
 
 isa_ok $exporter2, $pkg;
 
@@ -70,6 +64,6 @@ $exporter2->commit;
 
 is $file , $answer2 , "answer ok";
 
-is($exporter2->count, 17, "Count ok");
+is($exporter2->count, 6, "Count ok");
 
 done_testing 8;
