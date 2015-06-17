@@ -305,7 +305,8 @@ When no fields parameter is available, then all fields are read from the first i
 When the value option is activated, then the statistics are calculated on the contents of the
 fields instead of the availability of fields. Use this option to calculate statistics on 
 duplicate field values. For instance in the follow example, the title field has 2 duplicates,
-the author field has zero duplicates.
+the author field has zero duplicates. The year field is available in 2 out of 3 records, but in only
+one record (33%) it contains a value. 
 
     ---
     title: ABC
@@ -316,8 +317,10 @@ the author field has zero duplicates.
     title: ABC
     author:
         - Test3
+    year: ''
     ---
     title: DEF
+    year: 1980
 
 Examples of operation:
 
