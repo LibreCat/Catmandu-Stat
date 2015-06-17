@@ -34,10 +34,10 @@ my $data = [
 ];
 
 my $answer =<<EOF;
-| name | count | zeros | zeros% | min | max | mean | median | mode | variance | stdev | uniq |
-|------|-------|-------|--------|-----|-----|------|--------|------|----------|-------|------|
-| name | 18    | 0     | 0.0    | 1   | 2   | 1.06 | 1      | 1    | 0.06     | 0.24  | 4    |
-| age  | 0     | 17    | 100.0  | 0   | 0   | 0    | 0      | 0    | 0        | 0     | 1    |
+| name | count | zeros | zeros% | min | max | mean | median | mode | variance | stdev | uniq | entropy |
+|------|-------|-------|--------|-----|-----|------|--------|------|----------|-------|------|---------|
+| name | 18    | 0     | 0.0    | 1   | 2   | 1.06 | 1      | 1    | 0.06     | 0.24  | 4    | 1.7/4.2 |
+| age  | 0     | 17    | 100.0  | 0   | 0   | 0    | 0      | 0    | 0        | 0     | 1    | 0.0/4.1 |
 EOF
 
 my $file = "";
@@ -56,9 +56,9 @@ is($exporter->count, 17, "Count ok");
 $file = "";
 
 my $answer2 =<<EOF;
-| name | count | zeros | zeros% | min | max | mean | median | variance | stdev | uniq |
-|------|-------|-------|--------|-----|-----|------|--------|----------|-------|------|
-| name | 18    | 0     | 0.0    | 1   | 8   | 4.5  | 4.5    | 7.25     | 2.69  | 4    |
+| name | count | zeros | zeros% | min | max | mean | median | variance | stdev | uniq | entropy |
+|------|-------|-------|--------|-----|-----|------|--------|----------|-------|------|---------|
+| name | 18    | 0     | 0.0    | 1   | 8   | 4.5  | 4.5    | 7.25     | 2.69  | 4    | 1.7/4.2 |
 EOF
 
 my $exporter2 = $pkg->new(fields => 'name' , values => 1, file => \$file);
