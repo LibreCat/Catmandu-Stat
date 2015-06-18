@@ -49,6 +49,53 @@ our $VERSION = '0.02';
 
 =back
 
+=head1 EXAMPLES
+
+The Catmandu::Stat distribution includes a CSV file on the Sacramento crime rate in January 2006,
+"t/SacramentocrimeJanuary2006.csv" also available at 
+http://samplecsvs.s3.amazonaws.com/SacramentocrimeJanuary2006.csv
+
+To view statistics on the fields available in this file type:
+
+    $ catmandu convert CSV to Stat < t/SacramentocrimeJanuary2006.csv
+
+    | name          | count | zeros | zeros% | min | max | mean | median | mode | variance | stdev | uniq | entropy   |
+    |---------------|-------|-------|--------|-----|-----|------|--------|------|----------|-------|------|-----------|
+    | address       | 7584  | 0     | 0.0    | 1   | 1   | 1    | 1      | 1    | 0        | 0     | 5492 | 12.1/12.9 |
+    | beat          | 7584  | 0     | 0.0    | 1   | 1   | 1    | 1      | 1    | 0        | 0     | 20   | 4.3/12.9  |
+    | cdatetime     | 7584  | 0     | 0.0    | 1   | 1   | 1    | 1      | 1    | 0        | 0     | 5094 | 12.0/12.9 |
+    | crimedescr    | 7584  | 0     | 0.0    | 1   | 1   | 1    | 1      | 1    | 0        | 0     | 304  | 6.2/12.9  |
+    | district      | 7584  | 0     | 0.0    | 1   | 1   | 1    | 1      | 1    | 0        | 0     | 6    | 2.6/12.9  |
+    | grid          | 7584  | 0     | 0.0    | 1   | 1   | 1    | 1      | 1    | 0        | 0     | 539  | 8.5/12.9  |
+    | latitude      | 7584  | 0     | 0.0    | 1   | 1   | 1    | 1      | 1    | 0        | 0     | 5296 | 12.0/12.9 |
+    | longitude     | 7584  | 0     | 0.0    | 1   | 1   | 1    | 1      | 1    | 0        | 0     | 5280 | 12.0/12.9 |
+    | ucr_ncic_code | 7584  | 0     | 0.0    | 1   | 1   | 1    | 1      | 1    | 0        | 0     | 88   | 4.1/12.9  |
+
+The file has 7584 rows where and all the fields C<address> to C<ucr_ncic_code> contain values.
+Each field has only one value (no arrays available in the CSV file). The are 5492 unique 
+addresses in the CSV file. The C<district> field has the lowest entropy, most of its values are
+shared among many rows.
+
+To view statistics on the values available in the file type:
+   
+    $ catmandu covert CSV to Stat --values 1 < t/SacramentocrimeJanuary2006.csv
+   
+    | name          | count | zeros | zeros% | min | max  | mean  | median | variance  | stdev  | uniq | entropy   |
+    |---------------|-------|-------|--------|-----|------|-------|--------|-----------|--------|------|-----------|
+    | address       | 7584  | 0     | 0.0    | 1   | 47   | 1.38  | 1      | 2.39      | 1.55   | 5492 | 12.1/12.9 |
+    | beat          | 7584  | 0     | 0.0    | 42  | 521  | 379.2 | 396    | 10,566.06 | 102.79 | 20   | 4.3/12.9  |
+    | cdatetime     | 7584  | 0     | 0.0    | 1   | 24   | 1.49  | 1      | 1.67      | 1.29   | 5094 | 12.0/12.9 |
+    | crimedescr    | 7584  | 0     | 0.0    | 1   | 653  | 24.95 | 4      | 4,755.33  | 68.96  | 304  | 6.2/12.9  |
+    | district      | 7584  | 0     | 0.0    | 868 | 1575 | 1,264 | 1,260  | 53,900    | 232.16 | 6    | 2.6/12.9  |
+    | grid          | 7584  | 0     | 0.0    | 1   | 115  | 14.07 | 10     | 193.79    | 13.92  | 539  | 8.5/12.9  |
+    | latitude      | 7584  | 0     | 0.0    | 1   | 47   | 1.43  | 1      | 2.77      | 1.66   | 5296 | 12.0/12.9 |
+    | longitude     | 7584  | 0     | 0.0    | 1   | 47   | 1.44  | 1      | 2.78      | 1.67   | 5280 | 12.0/12.9 |
+    | ucr_ncic_code | 7584  | 0     | 0.0    | 1   | 2470 | 86.18 | 12     | 81,157.83 | 284.88 | 88   | 4.1/12.9  |
+
+There are 304 unique crimes (C<crimedescr>) in the data set. Some crimes are found 653 times in the dataset.
+Four types of crime comprise 50% of the dataset (C<median>).
+
+
 =head1 SEE ALSO
 
 L<Catmandu>,
