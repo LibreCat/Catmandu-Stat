@@ -81,7 +81,7 @@ shared among many rows.
 
 To view statistics on the values available in the file type:
    
-    $ catmandu covert CSV to Stat --values 1 < t/SacramentocrimeJanuary2006.csv
+    $ catmandu convert CSV to Stat --values 1 < t/SacramentocrimeJanuary2006.csv
    
     | name          | count | zeros | zeros% | min | max  | mean  | median | variance  | stdev  | uniq | entropy   |
     |---------------|-------|-------|--------|-----|------|-------|--------|-----------|--------|------|-----------|
