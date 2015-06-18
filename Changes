@@ -1,6 +1,8 @@
 Revision history for Catmandu-Stat
 
 {{$NEXT}}
+
+0.03  2015-06-18 10:03:08 CEST
   - adding entropy statistic
   - adding uniq count
   - adding default table layout
