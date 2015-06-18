@@ -19,6 +19,9 @@ our $VERSION = '0.02';
     # Export the statistics as YAML
     cat data.json | catmandu convert JSON to Stat --fields isbn --values 1 --as YAML
 
+    # Preprocess data and calculate statistics
+    catmandu convert MARC to Stat --fix 'marc_map(020a,isbn)' --fields isbn --values 1 < data.mrc
+    
     # Or in fix files
 
     # Calculate the mean of foo. E.g. foo => [1,2,3,4]
@@ -94,7 +97,6 @@ To view statistics on the values available in the file type:
 
 There are 304 unique crimes (C<crimedescr>) in the data set. Some crimes are found 653 times in the dataset.
 Four types of crime comprise 50% of the dataset (C<median>).
-
 
 =head1 SEE ALSO
 
