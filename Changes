@@ -1,6 +1,11 @@
 Revision history for Catmandu-Stat
 
 {{$NEXT}}
+  - adding entropy statistic
+  - adding uniq count
+  - adding default table layout
+  - adding default keys support
+  - adding examples
 
 0.02  2015-05-18 09:35:35 CEST
   - updating dependencies
