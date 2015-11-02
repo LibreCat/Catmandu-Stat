@@ -11,7 +11,7 @@ with 'Catmandu::Fix::SimpleGetValue';
 
 sub emit_value {
     my ($self, $var) = @_;
-    "${var} = '' . (Statistics::Basic::median(${var})) if is_array_ref(${var});";
+    "${var} = Statistics::Basic::median(${var}) if is_array_ref(${var});";
 }
 
 =head1 NAME
