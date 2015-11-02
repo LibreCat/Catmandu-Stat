@@ -70,7 +70,7 @@
          "web" : "https://github.com/LibreCat/Catmandu-Stat"
       }
    },
-   "version" : "0.03",
+   "version" : "0.04",
    "x_contributors" : [
       "Johann Rolschewski <rolschewski@gmail.com>",
       "Patrick Hochstenbach <patrick.hochstenbach@ugent.be>"
