@@ -1,7 +1,9 @@
 Revision history for Catmandu-Stat
 
 {{$NEXT}}
-
+  - simplify the code
+  - dropped values support
+  
 0.03  2015-06-18 10:03:08 CEST
   - adding entropy statistic
   - adding uniq count
@@ -11,6 +13,6 @@ Revision history for Catmandu-Stat
 
 0.02  2015-05-18 09:35:35 CEST
   - updating dependencies
-  
+
 0.01  2015-05-13 14:49:28 CEST
   - initial release
