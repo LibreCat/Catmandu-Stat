@@ -5,6 +5,7 @@ use Catmandu::Sane;
 use Catmandu::Util qw(:is);
 use Statistics::Basic;
 use List::Util;
+use Algorithm::HyperLogLog;
 use Moo;
 
 with 'Catmandu::Exporter';
@@ -36,13 +37,17 @@ sub inc_key_value {
     my $prev  = $self->{res}->{$key};
     my $count = 0;
 
+    $prev->{hll} = Algorithm::HyperLogLog->new(14) unless exists $prev->{hll};
+
     if (is_array_ref($val)) {
         for (@$val) {
             if (!defined($_) || length($val) == 0) {
                 $prev->{__values__}->{'<null>'} += 1;
+                $prev->{hll}->add('<null>');
             }
             else {
                 $prev->{__values__}->{$_} += 1;
+                $prev->{hll}->add($_);
                 $count++;
             }
         }
@@ -51,14 +56,17 @@ sub inc_key_value {
         # Nested fields are not supported for now. Treat them as unique
         # values...
         $prev->{__values__}->{"$val"} += 1;
+        $prev->{hll}->add("$val");
         $count++;
     }
     else {
         if (!defined($val) || length($val) == 0) {
             $prev->{__values__}->{'<null>'} += 1;
+            $prev->{hll}->add('<null>');
         }
         else {
             $prev->{__values__}->{$val} += 1;
+            $prev->{hll}->add($val);
             $count++;
         }
     }
@@ -78,6 +86,7 @@ sub get_key_counts {
 # Return the number of unique values in a field
 sub get_key_uniq {
     my ($self,$key) = @_;
+    #return $self->{res}->{$key}->{hll}->estimate();
     return int(grep({ $_ ne '<null>' } keys %{$self->{res}->{$key}->{__values__}}));
 }
 
