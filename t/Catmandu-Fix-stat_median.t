@@ -15,9 +15,9 @@ require_ok $pkg;
 
 lives_ok { $pkg->new('numbers')->fix({ numbers => [1,2,3,4] }) };
 
-is_deeply 
-$pkg->new('numbers')->fix({ numbers => [1,2,3,4] }), 
-{ numbers => 2.5 }, "Simple median ok";
+my $res = $pkg->new('numbers')->fix({ numbers => [1,2,3,4] });
+
+ok $res->{numbers} == 2.5 , "Simple median ok";
 
 
 done_testing 4;
