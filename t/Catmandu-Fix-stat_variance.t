@@ -15,9 +15,8 @@ require_ok $pkg;
 
 lives_ok { $pkg->new('numbers')->fix({ numbers => [1,2,3,4] }) };
 
-is_deeply 
-$pkg->new('numbers')->fix({ numbers => [1,2,3,4] }), 
-{ numbers => 1.25 }, "Simple variance ok";
+my $res = $pkg->new('numbers')->fix({ numbers => [1,2,3,4] });
 
+ok $res->{numbers} == 1.25 , "Simple variance ok";
 
 done_testing 4;

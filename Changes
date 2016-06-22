@@ -1,9 +1,10 @@
 Revision history for Catmandu-Stat
 
 {{$NEXT}}
-  - simplify the code
-  - dropped values support
-  
+
+0.04  2015-11-02 14:57:56 CET
+  - fixing locales in the tests
+
 0.03  2015-06-18 10:03:08 CEST
   - adding entropy statistic
   - adding uniq count
