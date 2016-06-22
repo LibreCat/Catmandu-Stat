@@ -50,7 +50,7 @@ sub inc_key_value {
     elsif (is_hash_ref($val)) {
         # Nested fields are not supported for now. Treat them as unique
         # values...
-        $prev->{__values__}->{$val} += 1;
+        $prev->{__values__}->{"$val"} += 1;
         $count++;
     }
     else {
