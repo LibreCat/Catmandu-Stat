@@ -2,6 +2,7 @@ package Catmandu::Exporter::Stat;
 
 use namespace::clean;
 use Catmandu::Sane;
+use Catmandu;
 use Catmandu::Util qw(:is);
 use Statistics::Basic;
 use List::Util;
@@ -14,10 +15,13 @@ has as           => (is => 'ro', default => sub { 'Table'} );
 has 'values'     => (is => 'ro');
 has res          => (is => 'ro');
 
+sub store {
+    Catmandu->store('Hash');
+}
 
 sub add {
     my ($self, $data) = @_;
-    
+
     unless (defined $self->fields) {
         $self->fields(join(",",sort keys %$data));
     }
@@ -25,16 +29,52 @@ sub add {
     if ($self->values) {
         $self->value_stats($data);
     }
-    else {  
+    else {
         $self->key_stats($data);
     }
 }
 
+sub inc_key_value {
+    my ($self,$key,$val) = @_;
+
+    my $prev = $self->{res}->{$key};
+
+    my $count = 0;
+
+    if (is_array_ref($val)) {
+        for (@$val) {
+            if (!defined($_) || length($_) == 0) {
+                $prev->{__values__}->{'<null>'} += 1;
+            }
+            else {
+                $prev->{__values__}->{$_} += 1;
+                $count++;
+            }
+        }
+    }
+    elsif (is_hash_ref($val)) {
+        # Nested fields are not supported. Count as unique field
+        $prev->{__values__}->{$val} += 1;
+        $count = 1;
+    }
+    else {
+        if (!defined($val) || length($val) == 0) {
+            $prev->{__values__}->{'<null>'} += 1;
+            $count = 0;
+        }
+        else {
+            $prev->{__values__}->{$val} += 1;
+            $count = 1;
+        }
+    }
+}
+
+# Parse the data and update a database of count of unique values
 sub value_stats {
     my ($self,$data) = @_;
 
     my @keys = split(/,/,$self->fields);
-    
+
     for my $key (@keys) {
         my $cnt = 0;
 
@@ -42,31 +82,14 @@ sub value_stats {
 
         my $val = $data->{$key};
 
-        if (is_array_ref($val)) {
-            for (@$val) {
-                if (!defined($_) || length($val) == 0) {
-                    $self->{res}->{$key}->{__values__}->{'<null>'} += 1;
-                }
-                else {
-                    $self->{res}->{$key}->{__values__}->{$_} += 1;
-                }
-            }
-        }
-        else {
-            if (!defined($val) || length($val) == 0) {
-                $self->{res}->{$key}->{__values__}->{'<null>'} += 1;
-            }
-            else {
-                $self->{res}->{$key}->{__values__}->{$val} += 1;
-            }
-        }
+        $self->inc_key_value($key,$val);
     }
 }
 
 sub key_stats {
     my ($self,$data) = @_;
     my @keys = split(/,/,$self->fields);
-    
+
     for my $key (@keys) {
         my $cnt = 0;
         my $val = $data->{$key};
@@ -124,7 +147,7 @@ sub commit {
     }
 
     my $exporter = Catmandu->exporter(
-                        $self->as, 
+                        $self->as,
                         fields => $fields,
                         file => $self->file
                    );
@@ -142,7 +165,7 @@ sub commit {
         $stats->{median}   = defined($val) && @$val ? '' . Statistics::Basic::median($val) : 'n/a';
         $stats->{variance} = defined($val) && @$val ? '' . Statistics::Basic::variance($val) : 'n/a';
         $stats->{stdev}    = defined($val) && @$val ? '' . Statistics::Basic::stddev($val) : 'n/a';
-        
+
         unless ($self->values) {
             $stats->{mode}     = defined($val) && @$val ? '' . Statistics::Basic::mode($val) : 'n/a';
         }
@@ -181,7 +204,7 @@ sub uniq {
 
 sub entropy {
     my ($self,$key) = @_;
-    
+
     return 'n/a' unless exists $self->{res}->{$key}->{__values__};
 
     my $values = $self->{res}->{$key}->{__values__};
@@ -263,25 +286,25 @@ Details:
 
 =over 4
 
-=item v 
+=item v
 
 Verbose output. Show the processing speed.
 
 =item fix FIX
 
-A fix or a fix file containing one or more fixes applied to the input data before 
+A fix or a fix file containing one or more fixes applied to the input data before
 the statistics are calculated.
 
 =item fields KEY[,KEY,...]
 
 One or more fields in the data for which statistics need to be calculated. No deep nested
-fields are allowed. The exporter will collect statistics on the availability of a field in 
+fields are allowed. The exporter will collect statistics on the availability of a field in
 all records. For instance, the following record contains one 'title' field, zero 'isbn'
 fields and 3 'author' fields
 
     ---
     title: ABCDEF
-    author: 
+    author:
         - Davis, Miles
         - Parker, Charly
         - Mingus, Charles
@@ -289,10 +312,10 @@ fields and 3 'author' fields
 
 Examples of operation:
 
-    # Calculate statistics on the number of records that contain a 'title' 
+    # Calculate statistics on the number of records that contain a 'title'
     cat data.json | catmandu convert JSON to Stat --fields title
 
-    # Calculate statistics on the number of records that contain a 'title', 'isbn' or 'subject' fields 
+    # Calculate statistics on the number of records that contain a 'title', 'isbn' or 'subject' fields
     cat data.json | catmandu convert JSON to Stat --fields title,isbn,subject
 
     # The next example will not work: no deeply nested fields allowed
@@ -303,14 +326,14 @@ When no fields parameter is available, then all fields are read from the first i
 =item values 0 | 1
 
 When the value option is activated, then the statistics are calculated on the contents of the
-fields instead of the availability of fields. Use this option to calculate statistics on 
+fields instead of the availability of fields. Use this option to calculate statistics on
 duplicate field values. For instance in the follow example, the title field has 2 duplicates,
 the author field has zero duplicates. The year field is available in 2 out of 3 records, but in only
-one record (33%) it contains a value. 
+one record (33%) it contains a value.
 
     ---
     title: ABC
-    author: 
+    author:
         - Test
         - Test2
     ---
