@@ -37,8 +37,7 @@ sub add {
 sub inc_key_value {
     my ($self,$key,$val) = @_;
 
-    my $prev = $self->{res}->{$key};
-
+    my $prev  = $self->{res}->{$key};
     my $count = 0;
 
     if (is_array_ref($val)) {
@@ -67,6 +66,8 @@ sub inc_key_value {
             $count = 1;
         }
     }
+
+    return $count;
 }
 
 # Parse the data and update a database of count of unique values

@@ -62,7 +62,7 @@ isa_ok $exporter2, $pkg;
 $exporter2->add($_) for @$data;
 $exporter2->commit;
 
-is $file , $answer2 , "answer ok";
+is $file , $answer2 , "answer2 ok";
 
 is($exporter2->count, 6, "Count ok");
 
