@@ -6,6 +6,8 @@ use Catmandu::Util qw(:is);
 use Statistics::Basic;
 use List::Util;
 use Algorithm::HyperLogLog;
+use Statistics::TopK;
+use POSIX qw(floor);
 use Moo;
 
 with 'Catmandu::Exporter';
@@ -13,6 +15,8 @@ with 'Catmandu::Exporter';
 has fields       => (is => 'rw');
 has as           => (is => 'ro', default => sub { 'Table'} );
 has res          => (is => 'ro');
+has topk         => (is => 'ro', default => sub { 100 });
+has hll          => (is => 'ro', default => sub { 14 });
 
 sub add {
     my ($self, $data) = @_;
@@ -37,16 +41,19 @@ sub inc_key_value {
     my $prev  = $self->{res}->{$key};
     my $count = 0;
 
-    $prev->{hll} = Algorithm::HyperLogLog->new(14) unless exists $prev->{hll};
+    $prev->{hll} = Algorithm::HyperLogLog->new($self->hll) 
+                            unless exists $prev->{hll};
+    $prev->{top} = Statistics::TopK->new($self->topk) 
+                            unless exists $prev->{top};
 
     if (is_array_ref($val)) {
         for (@$val) {
-            if (!defined($_) || length($val) == 0) {
-                $prev->{__values__}->{'<null>'} += 1;
+            if (!defined($_) || length($_) == 0) {
+                $prev->{top}->add('<null>');
                 $prev->{hll}->add('<null>');
             }
             else {
-                $prev->{__values__}->{$_} += 1;
+                $prev->{top}->add($_);
                 $prev->{hll}->add($_);
                 $count++;
             }
@@ -55,17 +62,17 @@ sub inc_key_value {
     elsif (is_hash_ref($val)) {
         # Nested fields are not supported for now. Treat them as unique
         # values...
-        $prev->{__values__}->{"$val"} += 1;
+        $prev->{top}->add("$val");
         $prev->{hll}->add("$val");
         $count++;
     }
     else {
         if (!defined($val) || length($val) == 0) {
-            $prev->{__values__}->{'<null>'} += 1;
+            $prev->{top}->add('<null>');
             $prev->{hll}->add('<null>');
         }
         else {
-            $prev->{__values__}->{$val} += 1;
+            $prev->{top}->add($val);
             $prev->{hll}->add($val);
             $count++;
         }
@@ -83,30 +90,51 @@ sub get_key_counts {
     return $self->{res}->{$key}->{__counts__};
 }
 
-# Return the number of unique values in a field
+# Return the estimated number of unique values in a field
 sub get_key_uniq {
     my ($self,$key) = @_;
-    #return $self->{res}->{$key}->{hll}->estimate();
-    return int(grep({ $_ ne '<null>' } keys %{$self->{res}->{$key}->{__values__}}));
+    return sprintf "%.3f" , $self->{res}->{$key}->{hll}->estimate();
 }
 
-# Return the entropy of a field
+# Return the estimated entropy of a field
 sub entropy {
     my ($self,$key) = @_;
 
-    my $values = $self->{res}->{$key}->{__values__};
-    my $cnt = 0;
+    my %values             = $self->{res}->{$key}->{top}->counts;
+    my $sample_count       = keys %values;
+    my $sample_cardinality = floor($self->get_key_uniq($key));
 
-    for my $k (keys %$values) {
-        $cnt += $values->{$k};
+    my $is_exact = $sample_count == $sample_cardinality ? 1 : 0;
+
+    my $cnt = 0;
+    my $has_unit_values = 0;
+
+    for my $k (keys %values) {
+        $cnt += $values{$k};
+        $has_unit_values = 1 if $values{$k} == 1;
     }
+
+    my $missing_values = $sample_cardinality - $sample_count;
+
+    if ($missing_values > 0 && ! $has_unit_values) {
+        print STDERR "Statistics::TopK bin not big enough to estimate the entropy\n";
+        print STDERR "Increate --topk to a value > " . $self->topk . "\n";
+        return 'n/a';
+    }
+
+    $cnt += $missing_values;
 
     return 'n/a' unless $cnt > 0;
 
     my $h = 0;
-    for my $k (keys %$values) {
-        my $p = $values->{$k}/$cnt;
+    for my $k (keys %values) {
+        my $p = $values{$k}/$cnt;
         $h += $p * log($p)/log(2);
+    }
+
+    if ($has_unit_values) {
+        my $p = 1 / $cnt;
+        $h += $missing_values * $p * log($p)/log(2);
     }
 
     return sprintf "%.1f/%.1f" , -1 * $h ,log($cnt)/log(2);

@@ -11,3 +11,5 @@ requires 'Statistics::Basic', '1.6611';
 requires 'Catmandu', '0.9301';
 requires 'Catmandu::Exporter::Table','0';
 requires 'List::Util','1.42';
+requires 'Algorithm::HyperLogLog','0';
+requires 'Statistics::TopK','0';
