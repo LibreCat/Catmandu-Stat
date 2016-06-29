@@ -3,7 +3,7 @@ package Catmandu::Exporter::Stat;
 use namespace::clean;
 use Catmandu::Sane;
 use Catmandu::Util qw(:is);
-use Statistics::Basic;
+use Statistics::Descriptive;
 use List::Util;
 use Algorithm::HyperLogLog;
 use Statistics::TopK;
@@ -41,10 +41,13 @@ sub inc_key_value {
     my $prev  = $self->{res}->{$key};
     my $count = 0;
 
-    $prev->{hll} = Algorithm::HyperLogLog->new($self->hll) 
+    $prev->{hll}  = Algorithm::HyperLogLog->new($self->hll)
                             unless exists $prev->{hll};
-    $prev->{top} = Statistics::TopK->new($self->topk) 
+    $prev->{top}  = Statistics::TopK->new($self->topk)
                             unless exists $prev->{top};
+
+    $prev->{stat} = Statistics::Descriptive::Sparse->new()
+                            unless exists $prev->{stat};
 
     if (is_array_ref($val)) {
         for (@$val) {
@@ -78,16 +81,17 @@ sub inc_key_value {
         }
     }
 
-    push @{$prev->{__counts__}} , $count;
+    $prev->{count} += $count;
+    $prev->{zero}  += 1 if $count == 0;
+    $prev->{stat}->add_data($count);
 
     $self->{res}->{$key} = $prev;
 }
 
-# Return an array of number of times a field is available in a record
-sub get_key_counts {
+# Return the stats for a key
+sub get_stat {
     my ($self,$key) = @_;
-    return [] unless $self->{res}->{$key};
-    return $self->{res}->{$key}->{__counts__};
+    return $self->{res}->{$key}->{stat};
 }
 
 # Return the estimated number of unique values in a field
@@ -145,7 +149,7 @@ sub commit {
 
     my @keys = split(/,/,$self->fields);
 
-    my $fields = [qw(name count zeros zeros% min max mean median mode variance stdev uniq entropy)];
+    my $fields = [qw(name count zeros zeros% min max mean variance stdev uniq% entropy)];
 
     my $exporter = Catmandu->exporter(
                         $self->as,
@@ -155,31 +159,23 @@ sub commit {
 
     for my $key (@keys) {
         my $stats = {};
-        $stats->{name} = $key;
-
-        my $val  = $self->get_key_counts($key);
-
-        $stats->{count}    = defined($val) && @$val ? List::Util::sum0(@$val) : 'n/a';
-        $stats->{min}      = defined($val) && @$val ? List::Util::min(@$val) : 'n/a';
-        $stats->{max}      = defined($val) && @$val ? List::Util::max(@$val) : 'n/a';
-        $stats->{mean}     = defined($val) && @$val ? '' . Statistics::Basic::mean($val) : 'n/a';
-        $stats->{median}   = defined($val) && @$val ? '' . Statistics::Basic::median($val) : 'n/a';
-        $stats->{mode}     = defined($val) && @$val ? '' . Statistics::Basic::mode($val) : 'n/a';
-        $stats->{variance} = defined($val) && @$val ? '' . Statistics::Basic::variance($val) : 'n/a';
-        $stats->{stdev}    = defined($val) && @$val ? '' . Statistics::Basic::stddev($val) : 'n/a';
-
-        my ($zeros,$zerosp) = ('n/a','n/a');
-
-        if (defined($val) && @$val) {
-            $zeros  = int(grep {$_ == 0} @$val);
-            $zerosp = sprintf "%.1f" , @$val > 0 ? 100 * $zeros / int(@$val) : 100;
-        }
-
+        $stats->{name}     = $key;
+        $stats->{count}    = $self->{res}->{$key}->{count};
+        $stats->{min}      = $self->get_stat($key)->min();
+        $stats->{max}      = $self->get_stat($key)->max();
+        $stats->{mean}     = $self->get_stat($key)->mean();
+        $stats->{variance} = sprintf "%.1f" , $self->get_stat($key)->variance();
+        $stats->{stdev}    = sprintf "%.1f" , $self->get_stat($key)->standard_deviation();
+        my ($zeros,$zerosp,$occur_count,$values_count,$uniqs);
+        $zeros  = $self->{res}->{$key}->{zero} // 0;
+        $values_count  = $self->{res}->{$key}->{count};
+        $occur_count   = $self->get_stat($key)->count();
+        $zerosp = sprintf "%.1f" , $occur_count > 0 ? 100 * $zeros / $occur_count : 100;
+        $uniqs  = sprintf "%.1f" , $values_count > 0 ? 100 * $self->get_key_uniq($key) / $values_count : 0.0;
         $stats->{zeros}    = $zeros;
         $stats->{'zeros%'} = $zerosp;
-
-        $stats->{uniq}     = defined($val) && @$val ? $self->get_key_uniq($key) : 'n/a';
-        $stats->{entropy}  = defined($val) && @$val ? $self->entropy($key) : 'n/a';
+        $stats->{'uniq%'}  = $uniqs;
+        $stats->{entropy}  = $self->entropy($key);
 
         $exporter->add($stats);
     }
@@ -209,25 +205,25 @@ the number of duplicate values. For each field the exporter calculates the follo
 statistics:
 
   * name    : the name of a field
-  * count   : the number of non-zero occurences of a field in all records
+  * count   : the number of occurences of a field in all records
   * zeros   : the number of records without a field
   * zeros%  : the percentage of records without a field
   * min     : the minimum number of occurences of a field in any record
   * max     : the maximum number of occurences of a field in any record
   * mean    : the mean number of occurences of a field in all records
-  * median  : the median number of occurences of a field in all records
-  * mode    : the most common number of occurences of a field in all records
   * variance : the variance of the field number
   * stdev   : the standard deviation of the field number
-  * uniq    : the number of uniq values
-  * entropy : the minimum and maximum entropy in the field values
+  * uniq%   : the percentage of uniq values (estimated value)
+  * entropy : the minimum and maximum entropy in the field values (estimated value)
 
 Details:
 
   * entropy is an indication in the variation of field values (are some values more unique than others)
-  * entropy values displayed as : minimum/maximum entropy
+  * entropy values are displayed as : minimum/maximum entropy
   * when the minimum entropy = 0, then all the field values are equal
   * when the minimum and maximum entropy are equal, then all the field values are different
+  * the 'uniq%' and 'entropy' fields are estimated and are normally within 1% of the
+    correct value (this is done to keep the memory requirements of this module low)
 
 =head1 CONFIGURATION
 
@@ -272,7 +268,7 @@ When no fields parameter is available, then all fields are read from the first i
 
 =item as Table | CSV | YAML | JSON | ...
 
-By default the statistics are exported in a CSV format. The use 'as' option to change the
+By default the statistics are exported in a Table format. The use 'as' option to change the
 export format.
 
 =back

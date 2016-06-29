@@ -23,10 +23,13 @@ my %module_build_args = (
   "module_name" => "Catmandu::Stat",
   "recursive_test_files" => 1,
   "requires" => {
+    "Algorithm::HyperLogLog" => 0,
     "Catmandu" => "0.9301",
     "Catmandu::Exporter::Table" => 0,
     "List::Util" => "1.42",
     "Statistics::Basic" => "1.6611",
+    "Statistics::Descriptive" => 0,
+    "Statistics::TopK" => 0,
     "perl" => "v5.10.1"
   },
   "test_requires" => {

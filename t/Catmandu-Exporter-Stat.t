@@ -5,6 +5,7 @@ use warnings;
 use Test::More;
 use Test::Exception;
 use JSON::XS ();
+use Catmandu;
 
 my $pkg;
 BEGIN {
@@ -35,17 +36,44 @@ ok $file , "answer ok";
 
 is($exporter->count, 6, "Count ok");
 
+my $importer = Catmandu->importer('JSON', file => 't/big.json');
+
 $file = "";
+$exporter = $pkg->new(file => \$file, as => 'JSON');
 
-my $exporter2 = $pkg->new(fields => 'name,age,x,foo' , values => 1, file => \$file);
+isa_ok $exporter, $pkg;
 
-isa_ok $exporter2, $pkg;
-
-$exporter2->add($_) for @$data;
-$exporter2->commit;
+$exporter->add_many($importer);
+$exporter->commit;
 
 ok $file , "answer ok";
 
-is($exporter2->count, 6, "Count ok");
+$data = JSON::XS::decode_json($file);
 
-done_testing 8;
+ok $data , "got json";
+
+my @uniq = grep({ $_->{name} eq 'uniq' }  @$data);
+
+is $uniq[0]->{count}     , 1000;
+is $uniq[0]->{'uniq%'}   , "100.0";
+is $uniq[0]->{entropy} , "10.0/10.0";
+
+my @half = grep({ $_->{name} eq 'half' }  @$data);
+
+is $half[0]->{count}     , 500;
+like $half[0]->{'uniq%'} , qr/^100\./;
+is $half[0]->{entropy}   , '5.5/10.0';
+
+my @quarter = grep({ $_->{name} eq 'quarter' }  @$data);
+
+is $quarter[0]->{count}     , 250;
+like $quarter[0]->{'uniq%'} , qr/^100\./;
+is $quarter[0]->{entropy}   , '2.8/10.0';
+
+my @double = grep({ $_->{name} eq 'double' }  @$data);
+
+is $double[0]->{count}     , 2000;
+like $double[0]->{'uniq%'} , qr/^0\.1/;
+is $double[0]->{entropy}   , '1.0/11.0';
+
+done_testing 20;
