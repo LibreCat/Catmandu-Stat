@@ -6,7 +6,7 @@ Catmandu::Stat - Catmandu modules for working with statistical data
 
 =cut
 
-our $VERSION = '0.04';
+our $VERSION = '0.10';
 
 =head1 SYNOPSIS
 
