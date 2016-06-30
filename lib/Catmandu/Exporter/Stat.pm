@@ -149,7 +149,7 @@ sub commit {
 
     my @keys = split(/,/,$self->fields);
 
-    my $fields = [qw(name count zeros zeros% min max mean variance stdev uniq% entropy)];
+    my $fields = [qw(name count zeros zeros% min max mean variance stdev uniq uniq% entropy)];
 
     my $exporter = Catmandu->exporter(
                         $self->as,
@@ -174,6 +174,7 @@ sub commit {
         $uniqs  = sprintf "%.1f" , $values_count > 0 ? 100 * $self->get_key_uniq($key) / $values_count : 0.0;
         $stats->{zeros}    = $zeros;
         $stats->{'zeros%'} = $zerosp;
+        $stats->{'uniq'}   = $self->get_key_uniq($key) ;
         $stats->{'uniq%'}  = $uniqs;
         $stats->{entropy}  = $self->entropy($key);
 
@@ -281,7 +282,7 @@ be increased.
 
 =item hll NUMBER
 
-This is the L<Algorithm::HyperLogLog> parameter calculating the estimation of 
+This is the L<Algorithm::HyperLogLog> parameter calculating the estimation of
 cardinality (uniqueness) of a data set. The HLL register parameter, which should
 be between 4 and 16, gives an estimate on the precision of the calculation. The
 bigger the number, the better precision but also more memory will be used. Default: 14.
@@ -290,9 +291,9 @@ bigger the number, the better precision but also more memory will be used. Defau
 
 =head1 SEE ALSO
 
-L<Catmandu::Exporter> , 
-L<Statistics::Descriptive> , 
-L<Statistics::TopK> , 
+L<Catmandu::Exporter> ,
+L<Statistics::Descriptive> ,
+L<Statistics::TopK> ,
 L<Algorithm::HyperLogLog>
 
 =cut
