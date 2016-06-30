@@ -1,7 +1,13 @@
 Revision history for Catmandu-Stat
 
 {{$NEXT}}
-
+  - calculating statistics without keepin all data in memory
+  - adding more tests
+  - deleting mode count
+  - making uniq% and entropic calculations estimated and thereby
+    needing much less memory
+  - new topk, hll options to tune the estimate count
+    
 0.04  2015-11-02 14:57:56 CET
   - fixing locales in the tests
 

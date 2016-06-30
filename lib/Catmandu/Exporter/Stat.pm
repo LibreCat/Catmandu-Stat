@@ -271,11 +271,29 @@ When no fields parameter is available, then all fields are read from the first i
 By default the statistics are exported in a Table format. The use 'as' option to change the
 export format.
 
+=item topk NUMBER
+
+To calculate the entropy an estimate of the probability distribution of the
+data set needs to be calculated. Topk is the expected lower bound on the
+number of field values which have repeated entries. By default it is set to
+100. If there are more fields values with doubles, then this number needs to
+be increased.
+
+=item hll NUMBER
+
+This is the L<Algorithm::HyperLogLog> parameter calculating the estimation of 
+cardinality (uniqueness) of a data set. The HLL register parameter, which should
+be between 4 and 16, gives an estimate on the precision of the calculation. The
+bigger the number, the better precision but also more memory will be used. Default: 14.
+
 =back
 
 =head1 SEE ALSO
 
-L<Catmandu::Exporter> , L<Statistics::Basic>
+L<Catmandu::Exporter> , 
+L<Statistics::Descriptive> , 
+L<Statistics::TopK> , 
+L<Algorithm::HyperLogLog>
 
 =cut
 
