@@ -1,6 +1,8 @@
 Revision history for Catmandu-Stat
 
 {{$NEXT}}
+
+0.11  2016-07-01 09:58:31 CEST
   - adding total number of records count
   - adding overflow indicator
 
