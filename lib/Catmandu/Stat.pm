@@ -14,7 +14,7 @@ our $VERSION = '0.12';
     cat data.json | catmandu convert JSON to Stat --fields isbn
 
     # Preprocess data and calculate statistics
-    catmandu convert MARC to Stat --fix 'marc_map(020a,isbn)' --fields isbn --values 1 < data.mrc
+    catmandu convert MARC to Stat --fix 'marc_map(020a,isbn)' --fields isbn < data.mrc
 
     # Or in fix files
 
