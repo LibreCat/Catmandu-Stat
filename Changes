@@ -2,7 +2,8 @@ Revision history for Catmandu-Stat
 
 {{$NEXT}}
   - adding total number of records count
-  
+  - adding overflow indicator
+
 0.10  2016-06-30 07:42:51 CEST
   - calculating statistics without keepin all data in memory
   - adding more tests
