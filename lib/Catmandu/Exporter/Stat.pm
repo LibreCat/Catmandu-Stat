@@ -17,6 +17,7 @@ has as           => (is => 'ro', default => sub { 'Table'} );
 has res          => (is => 'ro');
 has topk         => (is => 'ro', default => sub { 100 });
 has hll          => (is => 'ro', default => sub { 14 });
+has counter      => (is => 'ro');
 
 sub add {
     my ($self, $data) = @_;
@@ -31,6 +32,8 @@ sub add {
         my $val = $data->{$key};
         $self->inc_key_value($key,$val);
     }
+
+    $self->{counter} += 1;
 }
 
 # Update a counter of unique values in a field , plus the number of
@@ -149,13 +152,19 @@ sub commit {
 
     my @keys = split(/,/,$self->fields);
 
-    my $fields = [qw(name count zeros zeros% min max mean variance stdev uniq uniq% entropy)];
+    my $fields = [qw(name count zeros zeros% min max mean variance stdev uniq~ uniq% entropy)];
 
     my $exporter = Catmandu->exporter(
                         $self->as,
                         fields => $fields,
                         file => $self->file
                    );
+
+    $exporter->add(
+        { name => '#' , count => $self->counter }
+    );
+
+    my $has_overflow = 0;
 
     for my $key (@keys) {
         my $stats = {};
@@ -172,16 +181,31 @@ sub commit {
         $occur_count   = $self->get_stat($key)->count();
         $zerosp = sprintf "%.1f" , $occur_count > 0 ? 100 * $zeros / $occur_count : 100;
         $uniqs  = sprintf "%.1f" , $values_count > 0 ? 100 * $self->get_key_uniq($key) / $values_count : 0.0;
+
+        my $overflow = $values_count > 0 ? 100 * $self->get_key_uniq($key) / $values_count : 0.0;
+        $overflow    = $overflow > 100 ? 1 : 0;
+
         $stats->{zeros}    = $zeros;
         $stats->{'zeros%'} = $zerosp;
-        $stats->{'uniq'}   = $self->get_key_uniq($key) ;
+        $stats->{'uniq~'}  = floor($self->get_key_uniq($key));
         $stats->{'uniq%'}  = $uniqs;
+        $stats->{'uniq%'} .= " (!)" if $overflow;
+        $stats->{'uniq~'} .= " (!)" if $overflow;
         $stats->{entropy}  = $self->entropy($key);
+        $stats->{entropy} .= " (!)" if $overflow;
 
         $exporter->add($stats);
+
+        $has_overflow = 1 if $overflow;
     }
 
     $exporter->commit;
+
+    if ($has_overflow) {
+        print STDERR <<EOF;
+Overflow warning - probably your dataset is too small for an accurate uniq~, uniq% and entropy count...
+EOF
+    }
 }
 
 1;
@@ -214,7 +238,8 @@ statistics:
   * mean    : the mean number of occurences of a field in all records
   * variance : the variance of the field number
   * stdev   : the standard deviation of the field number
-  * uniq%   : the percentage of uniq values (estimated value)
+  * uniq~   : the estimated number of unique records
+  * uniq%   : the estimated percentage of uniq values
   * entropy : the minimum and maximum entropy in the field values (estimated value)
 
 Details:
@@ -225,6 +250,9 @@ Details:
   * when the minimum and maximum entropy are equal, then all the field values are different
   * the 'uniq%' and 'entropy' fields are estimated and are normally within 1% of the
     correct value (this is done to keep the memory requirements of this module low)
+
+Each statistical report contains one row named hash '#' which contains the total
+number of records.
 
 =head1 CONFIGURATION
 
