@@ -48,7 +48,7 @@ $exporter->commit;
 
 ok $file , "answer ok";
 
-$data = JSON::XS::decode_json($file);
+$data = Catmandu->importer('JSON', file => \$file)->to_array;
 
 ok $data , "got json";
 
