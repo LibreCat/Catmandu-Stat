@@ -43,7 +43,7 @@
       "runtime" : {
          "requires" : {
             "Algorithm::HyperLogLog" : "0",
-            "Catmandu" : "> 0.9301",
+            "Catmandu" : "0.9301",
             "Catmandu::Exporter::Table" : "0",
             "List::Util" : "1.42",
             "Statistics::Basic" : "1.6611",
@@ -73,7 +73,7 @@
          "web" : "https://github.com/LibreCat/Catmandu-Stat"
       }
    },
-   "version" : "0.12",
+   "version" : "0.13",
    "x_contributors" : [
       "Johann Rolschewski <rolschewski@gmail.com>",
       "Patrick Hochstenbach <patrick.hochstenbach@ugent.be>"

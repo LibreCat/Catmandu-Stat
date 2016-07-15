@@ -18,13 +18,13 @@ my %module_build_args = (
     "Patrick Hochstenbach, C<< <patrick.hochstenbach at ugent.be> >>"
   ],
   "dist_name" => "Catmandu-Stat",
-  "dist_version" => "0.12",
+  "dist_version" => "0.13",
   "license" => "perl",
   "module_name" => "Catmandu::Stat",
   "recursive_test_files" => 1,
   "requires" => {
     "Algorithm::HyperLogLog" => 0,
-    "Catmandu" => "> 0.9301",
+    "Catmandu" => "0.9301",
     "Catmandu::Exporter::Table" => 0,
     "List::Util" => "1.42",
     "Statistics::Basic" => "1.6611",
