@@ -224,18 +224,18 @@ Catmandu::Exporter::Stat - a statistical export
 
 =head1 DESCRIPTION
 
-The L<Catmandu::Stat> package can be used to calculate statistics on the availablity of
+The L<Catmandu::Stat> package can be used to calculate statistics on the availability of
 fields in a data file. Use this exporter to count the availability of fields or count
 the number of duplicate values. For each field the exporter calculates the following
 statistics:
 
   * name    : the name of a field
-  * count   : the number of occurences of a field in all records
+  * count   : the number of occurrences of a field in all records
   * zeros   : the number of records without a field
   * zeros%  : the percentage of records without a field
-  * min     : the minimum number of occurences of a field in any record
-  * max     : the maximum number of occurences of a field in any record
-  * mean    : the mean number of occurences of a field in all records
+  * min     : the minimum number of occurrences of a field in any record
+  * max     : the maximum number of occurrences of a field in any record
+  * mean    : the mean number of occurrences of a field in all records
   * variance : the variance of the field number
   * stdev   : the standard deviation of the field number
   * uniq~   : the estimated number of unique records
